@@ -1,0 +1,2 @@
+# huffmancodegenerator
+Generate Huffman Codes.
