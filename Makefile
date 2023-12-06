@@ -10,7 +10,7 @@ CFLAGS = -std=c++11 -Wall -Wextra -Wpedantic -Werror
 SDIR = ./src
 BDIR = ./build
 
-CLASSES=main huffman/Encoder
+CLASSES=main huffman/Encoder huffman/HuffmanNode
 OBJECTS = $(addprefix $(BDIR)/,$(addsuffix .o, $(CLASSES)))
 
 .PHONY: all run clean
