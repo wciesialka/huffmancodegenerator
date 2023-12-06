@@ -13,14 +13,10 @@ BDIR = ./build
 CLASSES=main huffman/Encoder huffman/HuffmanNode
 OBJECTS = $(addprefix $(BDIR)/,$(addsuffix .o, $(CLASSES)))
 
-.PHONY: all run clean
+.PHONY: all clean
 
 # Build everything - default
 all: $(EXEC).out
-
-# Build and run
-run: $(EXEC).out
-	./$<
 
 # Clean - Delete build files and executables
 clean:
