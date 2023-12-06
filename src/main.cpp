@@ -115,16 +115,23 @@ void create_decoded_file(const char* input, const int input_length, const char* 
 /**
  * @brief Read codetable.txt and turn into usable output.
  * 
- * @param[out] characters 
+ * @param[out] characters Character list.
+ * @param[out] codes Code table.
+ * @returns Length of code table.
 */
 int read_code_table(char** characters, std::string** codes){
     std::ifstream file("codetable.txt");
     int index = 0;
     std::string line;
     while(getline(file, line)){
-        // Resize if needed
-        (*characters)[index] = line[0];
-        (*codes)[index] = line.substr(2, line.length() - 1);
+        char c = line[0];
+        std::string code = line.substr(2, line.length() - 1);
+        if(line.substr(0,2).compare("LF") == 0){
+            c = '\n';
+            code = code.substr(1);
+        }
+        (*characters)[index] = c;
+        (*codes)[index] = code;
         index++;
     }
 
