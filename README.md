@@ -1,5 +1,5 @@
 # huffmancodegenerator
-Generate Huffman Codes.
+Generate Huffman Codes, encode data, and decode data.
 
 ## Setup
 
