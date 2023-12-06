@@ -9,6 +9,8 @@
 #ifndef HUFFMAN_ENCODER_H
 #define HUFFMAN_ENCODER_H
 
+#include "HuffmanNode.hpp"
+
 namespace huffman
 {
     /**
@@ -23,15 +25,16 @@ namespace huffman
      * @param[out] frequencies Occurences of each character. Indices match. 
      * @returns Length of frequencies table.
      */
-    int calculate_frequencies(char* input, int input_length, char* characters, int* frequencies);
+    int calculate_frequencies(const char* input, const int input_length, char* characters, int* frequencies);
 
     /**
-     * @brief Encode a string into a Huffman tree.
+     * @brief Encode a frequency table into a Huffman tree.
      * 
-     * @param[in] input Input string.
-     * @param[in] input_length Length of input string.
+     * @param[in] characters Unique characters from input string.
+     * @param[in] frequencies Frequencies of unique characters.
+     * @param[in] frequency_length Length of frequency table.
     */
-    void create_tree(char* input, int input_length);
+    huffman::HuffmanNode* create_tree(const char* characters, const int* frequencies, const int frequency_length);
 }
 
 #endif
