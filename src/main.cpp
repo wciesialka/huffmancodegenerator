@@ -32,6 +32,7 @@ void create_freq_txt(const char* characters, const int* frequencies, const int f
         }
         file << ' ' << frequencies[i] << std::endl;
     }
+    file.close();
 }
 
 /**
@@ -53,6 +54,7 @@ void create_codetable_txt(const char* characters, const std::string* codes, cons
         }
         file << ' ' << codes[i] << std::endl;
     }
+    file.close();
 }
 
 /**
@@ -75,18 +77,73 @@ void create_encoded_file(const char* input, const int input_length, const char* 
             }
         }
     }
+    file.close();
+}
+
+/**
+ * @brief Create decoded file.
+ * 
+ * @param[in] input Encoded input.
+ * @param[in] input_length Length of input.
+ * @param[in] characters Characters in code table.
+ * @param[in] code_table Strings in code table.
+ * @param[in] table_size Length of code table.
+*/
+void create_decoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
+    std::ofstream file("decoded.txt");
+
+    std::string current_code = "";
+    for(int i = 0; i < input_length; i++){
+        // Add code character to current code.
+        char c = input[i];
+        current_code += c;
+        // Find current code in table. If not found,
+        // keep building code. Otherwise, clear current code
+        // and append character to file.
+        for(int j = 0; j < table_size; j++){
+            if(current_code.compare(code_table[j]) == 0){
+                file << characters[j];
+                current_code = "";
+                break;
+            }
+        }
+    }
+
+    file.close();
+}
+
+/**
+ * @brief Read codetable.txt and turn into usable output.
+ * 
+ * @param[out] characters 
+*/
+int read_code_table(char** characters, std::string** codes){
+    std::ifstream file("codetable.txt");
+    int index = 0;
+    std::string line;
+    while(getline(file, line)){
+        // Resize if needed
+        (*characters)[index] = line[0];
+        (*codes)[index] = line.substr(2, line.length() - 1);
+        index++;
+    }
+
+    file.close();
+    return index;
 }
 
 /**
  * @brief Read the input from a text file.
  * 
+ * @param[in] path Path to input file.
  * @param[out] input Input string.
  * @returns Length of input string.
 */
-int read_text_input(char** input){
+int read_text_input(const char* path, char** input){
     int block_size = 256;
+    *input = new char[block_size];
 
-    std::ifstream file("input.txt");
+    std::ifstream file(path);
 
     int input_length = 0;
 
@@ -109,17 +166,22 @@ int read_text_input(char** input){
     return input_length;
 }
 
+/**
+ * @brief Return program usage message.
+ * 
+ * @returns Program usage message.
+*/
 const char* get_help_message(){
     return "usage: huffman [options]\n\toptions:\n\t\t-m, --mode {encode|decode}\tRun program in either encode or decode mode.\n\t\t-h, --help\tDisplay this message and quit.";
 }
 
 int main(int argc, char** argv){
+    // Parse CLI options
     static struct option options[] = {
         {"mode", required_argument, 0, 'm'},
         {"help", no_argument, 0, 'h'}
     };
 
-    // Parse CLI options
     int c;
     int optindex;
     int mode = 0;
@@ -145,6 +207,7 @@ int main(int argc, char** argv){
         }
     }
 
+    // Invalid mode: boot out
     if(mode == 0){
         std::cerr << argv[0] << ": Invalid mode type or no mode supplied." << std::endl;
         std::cerr << get_help_message() << std::endl;
@@ -153,8 +216,8 @@ int main(int argc, char** argv){
 
     // Encode
     if(mode == 1){
-        char* input = new char[256];
-        int input_length = read_text_input(&input);
+        char* input;
+        int input_length = read_text_input("input.txt", &input);
 
         char* characters = new char[256];
         int* frequencies = new int[256];
@@ -178,6 +241,15 @@ int main(int argc, char** argv){
         delete[] characters;
         delete[] frequencies;
         delete[] input;
+    }
+    // Decode
+    if(mode == 2){
+        std::string* code_table = new std::string[256];
+        char* characters = new char[256];
+        int table_size = read_code_table(&characters, &code_table);
+        char* input;
+        int input_length = read_text_input("encoded.txt", &input);
+        create_decoded_file(input, input_length, characters, code_table, table_size);
     }
 
     return 0;
