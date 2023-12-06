@@ -31,12 +31,14 @@ int huffman::calculate_frequencies(const char* input, const int input_length, ch
         }
     }
 
-    // Sort the array
+    // Sort the array using Bubblesort, too lazy to do a better method.
+    // It don't matter. None of this matters.
     int n = frequency_length;
     while(!(n <= 1)){
         int new_n = 0;
         for(int i=1; i<n; i++){
             if(frequencies[i-1] > frequencies[i]){
+                // Swap. I know there's a better way, but I don't care.
                 int a = frequencies[i-1];
                 int b = frequencies[i];
                 frequencies[i-1] = b;
@@ -55,32 +57,46 @@ int huffman::calculate_frequencies(const char* input, const int input_length, ch
     return frequency_length;
 }
 
-huffman::HuffmanNode* huffman::create_tree(const char* characters, const int* frequencies, const int frequency_length){
-    HuffmanNode* L[255];
+huffman::HuffmanNode* huffman::create_tree(const char* characters, const int* frequencies, const int frequency_length, huffman::HuffmanNode** working_array){
     int list_size = frequency_length;
     for(int i = 0; i < frequency_length; i++){
-        L[i] = new HuffmanNode(frequencies[i], characters[i]);
+        working_array[i] = new HuffmanNode(frequencies[i], characters[i]);
     }
-    int index = 1;
-    while(index < list_size){
-        HuffmanNode* x = L[index-1];
-        HuffmanNode* y = L[index];
+    int start = 1;
+    while(start < list_size){
+
+        HuffmanNode* x = working_array[start-1];
+        HuffmanNode* y = working_array[start];
+        start += 2;
+
         HuffmanNode* z = new HuffmanNode(x->get_frequency() + y->get_frequency());
         z->set_left_child(x);
-        z->set_left_child(y);
+        z->set_right_child(y);
+
+        bool z_inserted = false;
         // Insert z in-order
-        for(int i = index; i < list_size; i++){
-            if(z->get_frequency() < L[i]->get_frequency()){
+        for(int i = start; i < list_size; i++){
+            if(z->get_frequency() < working_array[i]->get_frequency()){
                 // Resize list and shift it
-                for(int j = list_size-1; j >= i; j--){
-                    L[j+1] = L[j];
+                for(int j = list_size; j > i; j--){
+                    working_array[j] = working_array[j-1];
                 }
-                list_size++;
-                L[i] = z;
+                working_array[i] = z;
+                z_inserted = true;
                 break;
             }
         }
-        index += 2;
+        if(!z_inserted){
+            working_array[list_size] = z;
+        }
+        list_size++;
     }
-    return L[list_size-1];
+    return working_array[list_size-1];
+}
+
+void huffman::create_code_table(const char* characters, const int characters_length, const HuffmanNode* tree, std::string* code_table){
+    for(int i = 0; i < characters_length; i++){
+        std::string code = tree->encode_character(characters[i]);
+        code_table[i] = code;
+    }
 }
