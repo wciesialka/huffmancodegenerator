@@ -18,14 +18,6 @@ namespace huffman
     public:
         HuffmanNode(const int frequency) : frequency(frequency){};
         HuffmanNode(const int frequency, const char key) : frequency(frequency), key(key){};
-        ~HuffmanNode() {
-            if(this->left_child){
-                delete this->left_child;
-            }
-            if(this->right_child){
-                delete this->right_child;
-            }
-        }
 
         inline int get_frequency() const { return this->frequency; }
 

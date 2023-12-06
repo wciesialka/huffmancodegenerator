@@ -7,6 +7,7 @@
  */
 
 #include "HuffmanNode.hpp"
+#include <iostream>
 
 std::string huffman::HuffmanNode::encode_character(const char needle) const
 {
