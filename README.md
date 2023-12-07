@@ -34,12 +34,12 @@ Encoding expects the following input in the same directory as being run:
 It will generate three output files:
 - `freq.txt` contains frequencies of characters.
 - `codetable.txt` contains the code table.
-- `encoded.txt` contains the encoded data.
+- `encoded.bin` contains the encoded data.
 
 ### Decoding
 
 Encoding expects the following input in the same directory as being run:
-- `encoded.txt`, containing the encoded data.
+- `encoded.bin`, containing the encoded data.
 - `codetable.txt`, containing the code table for the Huffman tree.
 
 It will produce one output file:

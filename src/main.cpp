@@ -67,16 +67,30 @@ void create_codetable_txt(const char* characters, const std::string* codes, cons
  * @param[in] table_size Size of character/code table
 */
 void create_encoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
-    std::ofstream file("encoded.txt");
+    std::ofstream file("encoded.bin", std::ios::out | std::ios::binary);
+    int bit_count = 0;
+    char current_byte = 0;
     for(int i = 0; i < input_length; i++){
         char c = input[i];
         for(int j = 0; j < table_size; j++){
             if(characters[j] == c){
-                file << code_table[j];
+                std::string code = code_table[j];
+                for(unsigned long k = 0; k < code.length(); k++){
+                    if(code[k] == '1'){
+                        current_byte |= 1 << (8 - (bit_count % 8) - 1);
+                    }
+                    bit_count ++;
+                    if(bit_count % 8 == 0){
+                        file << current_byte;
+                        current_byte = 0;
+                    }
+                }
                 break;
             }
         }
     }
+    file << current_byte;
+    file.write(reinterpret_cast<const char*>(&bit_count), sizeof(int));
     file.close();
 }
 
@@ -92,11 +106,28 @@ void create_encoded_file(const char* input, const int input_length, const char* 
 void create_decoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
     std::ofstream file("decoded.txt");
 
+    int byte_size = 8;
+
+    int bit_count;
+    int size_difference = (int)(sizeof(int)/sizeof(char));
+    int int_offset = input_length - size_difference;
+    memcpy(&bit_count, input + int_offset, sizeof(int));
     std::string current_code = "";
-    for(int i = 0; i < input_length; i++){
-        // Add code character to current code.
-        char c = input[i];
-        current_code += c;
+    for(int i = 0; i < bit_count; i++){
+        // Get the current byte being read.
+        int character_index = i / byte_size;
+        char c = input[character_index];
+        // Get the current bit from that byte.
+        char bit_offset = i % byte_size;
+        char shift = (byte_size) - bit_offset - 1;
+        char check_bit = 1 << shift;
+
+        if(c & check_bit){
+            current_code += '1';
+        } else {
+            current_code += '0';
+        }
+
         // Find current code in table. If not found,
         // keep building code. Otherwise, clear current code
         // and append character to file.
@@ -146,11 +177,11 @@ int read_code_table(char** characters, std::string** codes){
  * @param[out] input Input string.
  * @returns Length of input string.
 */
-int read_text_input(const char* path, char** input){
+int read_input_txt(const char* path, char** input){
     int block_size = 256;
     *input = new char[block_size];
 
-    std::ifstream file(path);
+    std::ifstream file(path, std::ios::in | std::ios::binary);
 
     int input_length = 0;
 
@@ -224,7 +255,7 @@ int main(int argc, char** argv){
     // Encode
     if(mode == 1){
         char* input;
-        int input_length = read_text_input("input.txt", &input);
+        int input_length = read_input_txt("input.txt", &input);
 
         char* characters = new char[256];
         int* frequencies = new int[256];
@@ -255,7 +286,7 @@ int main(int argc, char** argv){
         char* characters = new char[256];
         int table_size = read_code_table(&characters, &code_table);
         char* input;
-        int input_length = read_text_input("encoded.txt", &input);
+        int input_length = read_input_txt("encoded.bin", &input);
         create_decoded_file(input, input_length, characters, code_table, table_size);
     }
 
