@@ -65,10 +65,13 @@ void create_codetable_txt(const char* characters, const std::string* codes, cons
  * @param[in] characters Character table
  * @param[in] code_table Code table
  * @param[in] table_size Size of character/code table
+ * 
+ * @returns Size of the file, in bytes.
 */
-void create_encoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
+int create_encoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
     std::ofstream file("encoded.bin", std::ios::out | std::ios::binary);
     int bit_count = 0;
+    int byte_size = 0;
     char current_byte = 0;
     for(int i = 0; i < input_length; i++){
         char c = input[i];
@@ -83,15 +86,21 @@ void create_encoded_file(const char* input, const int input_length, const char* 
                     if(bit_count % 8 == 0){
                         file << current_byte;
                         current_byte = 0;
+                        byte_size++;
                     }
                 }
                 break;
             }
         }
     }
-    file << current_byte;
+    if(bit_count % 8 > 0){
+        file << current_byte;
+        byte_size++;
+    }
     file.write(reinterpret_cast<const char*>(&bit_count), sizeof(int));
+    byte_size += sizeof(int);
     file.close();
+    return byte_size;
 }
 
 /**
@@ -177,7 +186,7 @@ int read_code_table(char** characters, std::string** codes){
  * @param[out] input Input string.
  * @returns Length of input string.
 */
-int read_input_txt(const char* path, char** input){
+int read_data_from_file(const char* path, char** input){
     int block_size = 256;
     *input = new char[block_size];
 
@@ -255,7 +264,7 @@ int main(int argc, char** argv){
     // Encode
     if(mode == 1){
         char* input;
-        int input_length = read_input_txt("input.txt", &input);
+        int input_length = read_data_from_file("input.txt", &input);
 
         char* characters = new char[256];
         int* frequencies = new int[256];
@@ -272,7 +281,12 @@ int main(int argc, char** argv){
 
         create_codetable_txt(characters, code_table, frequency_length);
 
-        create_encoded_file(input, input_length, characters, code_table, frequency_length);
+        int encoded_size = create_encoded_file(input, input_length, characters, code_table, frequency_length);
+        float percent_difference = (float)(encoded_size)/(float)(input_length);
+        int efficiency = (int)(percent_difference*100);
+        std::cout << "File Encoded!" << std::endl;
+        std::cout << "Input File Size: " << input_length << " bytes" << std::endl;
+        std::cout << "Encoded File Size: " << encoded_size << " bytes (" << efficiency << "%)" << std::endl;
 
         delete[] code_table;
         delete[] working_array;
@@ -286,7 +300,7 @@ int main(int argc, char** argv){
         char* characters = new char[256];
         int table_size = read_code_table(&characters, &code_table);
         char* input;
-        int input_length = read_input_txt("encoded.bin", &input);
+        int input_length = read_data_from_file("encoded.bin", &input);
         create_decoded_file(input, input_length, characters, code_table, table_size);
     }
 
