@@ -57,16 +57,29 @@ int huffman::calculate_frequencies(const char* input, const int input_length, ch
     return frequency_length;
 }
 
-huffman::HuffmanNode* huffman::create_tree(const char* characters, const int* frequencies, const int frequency_length, huffman::HuffmanNode** working_array){
+huffman::HuffmanNode* huffman::create_tree(const char* characters, const int* frequencies, const int frequency_length, huffman::HuffmanNode*** working_array){
     int list_size = frequency_length;
+    int buffer_size = 256;
+    int array_size = 0;
     for(int i = 0; i < frequency_length; i++){
-        working_array[i] = new HuffmanNode(frequencies[i], characters[i]);
+        (*working_array)[i] = new HuffmanNode(frequencies[i], characters[i]);
+        array_size++;
     }
     int start = 1;
     while(start < list_size){
+        // Resize working array as necessary
+        if(list_size >= buffer_size){
+            buffer_size *= 2;
+            HuffmanNode** tmp = new HuffmanNode*[buffer_size];
+            for(int i = 0; i < list_size; i++){
+                tmp[i] = (*working_array)[i];
+            }
+            delete[] *working_array;
+            *working_array = tmp;
+        }
 
-        HuffmanNode* x = working_array[start-1];
-        HuffmanNode* y = working_array[start];
+        HuffmanNode* x = (*working_array)[start-1];
+        HuffmanNode* y = (*working_array)[start];
         start += 2;
 
         HuffmanNode* z = new HuffmanNode(x->get_frequency() + y->get_frequency());
@@ -76,22 +89,21 @@ huffman::HuffmanNode* huffman::create_tree(const char* characters, const int* fr
         bool z_inserted = false;
         // Insert z in-order
         for(int i = start; i < list_size; i++){
-            if(z->get_frequency() < working_array[i]->get_frequency()){
-                // Resize list and shift it
+            if(z->get_frequency() < (*working_array)[i]->get_frequency()){
                 for(int j = list_size; j > i; j--){
-                    working_array[j] = working_array[j-1];
+                    (*working_array)[j] = (*working_array)[j-1];
                 }
-                working_array[i] = z;
+                (*working_array)[i] = z;
                 z_inserted = true;
                 break;
             }
         }
         if(!z_inserted){
-            working_array[list_size] = z;
+            (*working_array)[list_size] = z;
         }
         list_size++;
     }
-    return working_array[list_size-1];
+    return (*working_array)[list_size-1];
 }
 
 void huffman::create_code_table(const char* characters, const int characters_length, const HuffmanNode* tree, std::string* code_table){

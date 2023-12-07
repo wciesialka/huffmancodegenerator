@@ -270,11 +270,11 @@ int main(int argc, char** argv){
         int* frequencies = new int[256];
 
         int frequency_length = huffman::calculate_frequencies(input, input_length, characters, frequencies);
-
+        
         create_freq_txt(characters, frequencies, frequency_length);
 
-        huffman::HuffmanNode** working_array = new huffman::HuffmanNode*[255];
-        huffman::HuffmanNode* tree = huffman::create_tree(characters, frequencies, frequency_length, working_array);
+        huffman::HuffmanNode** working_array = new huffman::HuffmanNode*[256];
+        huffman::HuffmanNode* tree = huffman::create_tree(characters, frequencies, frequency_length, &working_array);
 
         std::string* code_table = new std::string[frequency_length];
         huffman::create_code_table(characters, frequency_length, tree, code_table);

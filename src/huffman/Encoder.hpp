@@ -33,9 +33,9 @@ namespace huffman
      * @param[in] characters Unique characters from input string.
      * @param[in] frequencies Frequencies of unique characters.
      * @param[in] frequency_length Length of frequency table.
-     * @param[in] working_array Empty array to do work in.
+     * @param[in] working_array Pointer to empty array to do work in.
     */
-    huffman::HuffmanNode* create_tree(const char* characters, const int* frequencies, const int frequency_length, huffman::HuffmanNode** working_array);
+    huffman::HuffmanNode* create_tree(const char* characters, const int* frequencies, const int frequency_length, huffman::HuffmanNode*** working_array);
 
     /**
      * @brief Create a code table for the given characters.
