@@ -70,9 +70,10 @@ void create_codetable_txt(const char* characters, const std::string* codes, cons
 */
 int create_encoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
     std::ofstream file("encoded.bin", std::ios::out | std::ios::binary);
-    int bit_count = 0;
+    char bit_count = 0;
     int byte_size = 0;
     char current_byte = 0;
+
     for(int i = 0; i < input_length; i++){
         char c = input[i];
         for(int j = 0; j < table_size; j++){
@@ -80,25 +81,28 @@ int create_encoded_file(const char* input, const int input_length, const char* c
                 std::string code = code_table[j];
                 for(unsigned long k = 0; k < code.length(); k++){
                     if(code[k] == '1'){
-                        current_byte |= 1 << (8 - (bit_count % 8) - 1);
+                        current_byte |= 1 << (8 - (bit_count) - 1);
                     }
                     bit_count ++;
+
                     if(bit_count % 8 == 0){
                         file << current_byte;
                         current_byte = 0;
                         byte_size++;
+                        bit_count = 0;
                     }
                 }
                 break;
             }
         }
     }
-    if(bit_count % 8 > 0){
+    if(bit_count > 0){
         file << current_byte;
         byte_size++;
     }
-    file.write(reinterpret_cast<const char*>(&bit_count), sizeof(int));
-    byte_size += sizeof(int);
+    char bit_offset = (8 - bit_count);
+    file << bit_offset;
+    byte_size += sizeof(char);
     file.close();
     return byte_size;
 }
@@ -111,16 +115,17 @@ int create_encoded_file(const char* input, const int input_length, const char* c
  * @param[in] characters Characters in code table.
  * @param[in] code_table Strings in code table.
  * @param[in] table_size Length of code table.
+ * 
+ * @returns Size of the decoded file, in characters (bytes).
 */
-void create_decoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
+int create_decoded_file(const char* input, const int input_length, const char* characters, const std::string* code_table, const int table_size){
     std::ofstream file("decoded.txt");
 
     int byte_size = 8;
 
-    int bit_count;
-    int size_difference = (int)(sizeof(int)/sizeof(char));
-    int int_offset = input_length - size_difference;
-    memcpy(&bit_count, input + int_offset, sizeof(int));
+    int bit_offset = (int)(input[input_length - 1]);
+    int bit_count = ((input_length-1)*byte_size) - (bit_offset);
+    int decoded_size = 0;
     std::string current_code = "";
     for(int i = 0; i < bit_count; i++){
         // Get the current byte being read.
@@ -143,6 +148,7 @@ void create_decoded_file(const char* input, const int input_length, const char* 
         for(int j = 0; j < table_size; j++){
             if(current_code.compare(code_table[j]) == 0){
                 file << characters[j];
+                decoded_size++;
                 current_code = "";
                 break;
             }
@@ -150,6 +156,7 @@ void create_decoded_file(const char* input, const int input_length, const char* 
     }
 
     file.close();
+    return decoded_size;
 }
 
 /**
@@ -301,7 +308,15 @@ int main(int argc, char** argv){
         int table_size = read_code_table(&characters, &code_table);
         char* input;
         int input_length = read_data_from_file("encoded.bin", &input);
-        create_decoded_file(input, input_length, characters, code_table, table_size);
+        int decoded_size = create_decoded_file(input, input_length, characters, code_table, table_size);
+        float percent_difference = (float)(decoded_size)/(float)(input_length);
+        int efficiency = (int)(percent_difference*100);
+
+        std::cout << "File Decoded!" << std::endl;
+        std::cout << "Input File Size: " << input_length << " bytes" << std::endl;
+        std::cout << "Decoded File Size: " << decoded_size << " bytes (" << efficiency << "%)" << std::endl;
+        delete[] characters;
+        delete[] input;
     }
 
     return 0;
